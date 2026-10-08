@@ -34,6 +34,24 @@ from rich.text import Text
 os.get_terminal_size
 
 
+
+
+@pytest.fixture(autouse=True)
+def _scrub_columns_lines(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Strip COLUMNS and LINES from the inherited environment.
+
+    The ``Console`` constructor reads ``COLUMNS`` and ``LINES`` via
+    ``os.environ``, and several assertions in this module hard-code the
+    historical (80, 25) default. CI runners and some terminal multiplexers
+    export these variables, which would otherwise make size-dependent tests
+    fail in environments that don't clear them. The tests in this module
+    don't rely on the inherited values, so we remove them for the duration
+    of each test.
+    """
+    monkeypatch.delenv("COLUMNS", raising=False)
+    monkeypatch.delenv("LINES", raising=False)
+
+
 def test_dumb_terminal() -> None:
     console = Console(force_terminal=True, _environ={})
     assert console.color_system is not None
